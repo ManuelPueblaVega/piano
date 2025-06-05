@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>App de Piano</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #222; /* Fondo oscuro para contraste */
+            color: white;
+            font-family: 'Inter', sans-serif; /* Fuente Inter */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            touch-action: none; /* Previene el scroll al tocar */
+            overflow: hidden; /* Evita barras de desplazamiento */
+        }
+        h2 {
+            font-size: calc(2.5rem + 1vw);
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.7);
+            color: #f0f0f0; /* Color claro para el título */
+        }
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 450px; /* Ancho máximo para el contenedor de botones */
+            padding: 15px;
+            gap: 10px; /* Espacio entre botones */
+            background: #333; /* Fondo ligeramente más claro para las teclas */
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .note-button {
+            width: 100%;
+            padding: 22px; /* Padding ajustado */
+            border: none;
+            border-radius: 10px; /* Esquinas redondeadas */
+            color: #333; /* Color de texto por defecto (para que contraste con las teclas claras) */
+            font-size: calc(1.3rem + 0.8vw); /* Tamaño de fuente */
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.05s ease-out, box-shadow 0.1s ease-out, filter 0.1s ease-out; /* Transición para el filtro */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); /* Sombra para profundidad */
+            font-weight: 600;
+        }
+
+        /* Colores de las teclas basados en Boomwhackers */
+        .note-button[data-note="C4"] { background-color: #FF0000; color: white; } /* Rojo */
+        .note-button[data-note="D4"] { background-color: #FF8C00; color: white; } /* Naranja */
+        .note-button[data-note="E4"] { background-color: #FFFF00; color: #333; } /* Amarillo */
+        .note-button[data-note="F4"] { background-color: #7FFF00; color: #333; } /* Verde Limón */
+        .note-button[data-note="G4"] { background-color: #008000; color: white; } /* Verde Oscuro */
+        .note-button[data-note="A4"] { background-color: #8A2BE2; color: white; } /* Violeta/Morado */
+        .note-button[data-note="B4"] { background-color: #FF1493; color: white; } /* Rosa Fuerte */
+        .note-button[data-note="C5"] { background-color: #DC143C; color: white; } /* Rojo (un tono diferente para el C de la siguiente octava) */
+        .note-button[data-note="D5"] { background-color: #FF8C00; color: white; } /* Naranja */
+        .note-button[data-note="E5"] { background-color: #FFFF00; color: #333; } /* Amarillo */
+
+
+        .note-button.active {
+            transform: scale(0.97); /* Efecto de "presionado" más sutil */
+            box-shadow: 0 1px 5px rgba(0,0,0,0.4);
+            filter: brightness(1.2) saturate(1.2); /* Aumenta el brillo y la saturación al activar */
+        }
+        .note-button.glow {
+            animation: pulse 0.4s forwards; /* Animación más corta, no infinita */
+        }
+        /* La sombra del 'glow' ahora se genera dinámicamente con la JS para coincidir con el color base */
+        @keyframes pulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.01); opacity: 0.9; }
+        }
+        .back-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 18px;
+            font-size: 0.9em;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            z-index: 1000;
+            transition: background 0.3s ease;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+        }
+        .back-button:hover {
+            background: #777;
+        }
+        footer {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            font-size: 0.75em;
+            color: #bbb;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        @media (max-width: 600px) {
+            h2 {
+                margin-top: 30px;
+                margin-bottom: 15px;
+                font-size: calc(2rem + 1vw);
+            }
+            .note-button {
+                padding: 15px;
+                font-size: calc(1.1rem + 1vw);
+            }
+            .buttons-container {
+                gap: 8px;
+                padding: 10px;
+            }
+            .back-button {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+                font-size: 0.7em;
+            }
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <button class="back-button" onclick="location.href='https://manuelpueblavega.github.io/appInstru/'">Volver</button>
+    <h2>Piano Virtual</h2>
+    <div class="buttons-container">
+        <!-- Notas del piano: C4 a E5 -->
+        <button class="note-button" data-note="C4">Do4</button>
+        <button class="note-button" data-note="D4">Re4</button>
+        <button class="note-button" data-note="E4">Mi4</button>
+        <button class="note-button" data-note="F4">Fa4</button>
+        <button class="note-button" data-note="G4">Sol4</button>
+        <button class="note-button" data-note="A4">La4</button>
+        <button class="note-button" data-note="B4">Si4</button>
+        <button class="note-button" data-note="C5">Do5</button>
+        <button class="note-button" data-note="D5">Re5</button>
+        <button class="note-button" data-note="E5">Mi5</button>
+    </div>
+    <footer>
+        Creado por Manuel Puebla Vega
+    </footer>
+    <script>
+        let audioCtx; // Contexto de audio global
+        const activeSources = {}; // Objeto para almacenar los osciladores activos (para poder detenerlos)
+
+        // Definición de frecuencias para las notas de piano (C4 a E5)
+        const noteFrequencies = {
+            'C4': 261.63,
+            'D4': 293.66,
+            'E4': 329.63,
+            'F4': 349.23,
+            'G4': 392.00,
+            'A4': 440.00,
+            'B4': 493.88,
+            'C5': 523.25,
+            'D5': 587.33,
+            'E5': 659.25
+        };
+
+        /**
+         * Inicializa el contexto de audio.
+         */
+        async function initAudioContext() {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            console.log("AudioContext inicializado para Piano.");
+        }
+
+        /**
+         * Reproduce una nota de piano utilizando un oscilador y un envolvente ADSR básico.
+         * @param {string} note El nombre de la nota a reproducir (ej. 'C4').
+         */
+        function playNote(note) {
+            // Si la nota ya está activa (sonando), no hacer nada
+            if (activeSources[note]) return;
+
+            const frequency = noteFrequencies[note];
+            if (!frequency) {
+                console.warn(`Frecuencia no definida para la nota: ${note}`);
+                return;
+            }
+
+            const oscillator = audioCtx.createOscillator(); // Crea un oscilador
+            const gainNode = audioCtx.createGain(); // Crea un nodo de ganancia para controlar el volumen
+
+            oscillator.type = 'sine'; // Tipo de onda sinusoidal para un sonido más parecido al piano
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime); // Asigna la frecuencia
+
+            // Conecta el oscilador al nodo de ganancia y luego al destino (altavoces)
+            oscillator.connect(gainNode).connect(audioCtx.destination);
+
+            // Implementación de un envolvente ADSR (Attack, Decay, Sustain, Release) simple
+            const now = audioCtx.currentTime;
+            const attackTime = 0.02; // Ataque rápido para el piano
+            const decayTime = 0.1;   // Decaimiento rápido
+            const sustainLevel = 0.5; // Nivel de sostenido
+            const releaseTime = 0.5; // Tiempo de liberación (cuando se suelta la tecla)
+
+            // Attack
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(1, now + attackTime);
+            
+            // Decay
+            gainNode.gain.linearRampToValueAtTime(sustainLevel, now + attackTime + decayTime);
+
+            oscillator.start(now);
+
+            // Almacena el oscilador y el nodo de ganancia para poder detenerlos/liberarlos más tarde
+            activeSources[note] = { oscillator, gainNode, startTime: now, releaseTime: releaseTime };
+            console.log(`Reproduciendo ${note} a ${frequency} Hz.`);
+        }
+
+        /**
+         * Detiene la reproducción de una nota de piano aplicando la fase de Release del ADSR.
+         * @param {string} note El nombre de la nota a detener.
+         */
+        function stopNote(note) {
+            // Si la nota está activa
+            if (activeSources[note]) {
+                const { oscillator, gainNode, startTime, releaseTime } = activeSources[note];
+                const now = audioCtx.currentTime;
+
+                // Release: Desvanece el volumen hasta cero
+                gainNode.gain.cancelScheduledValues(now); // Cancela cualquier rampa pendiente
+                gainNode.gain.exponentialRampToValueAtTime(0.001, now + releaseTime); // Desvanece a casi cero
+
+                // Detiene el oscilador después de que la rampa de release haya terminado
+                oscillator.stop(now + releaseTime);
+
+                // Elimina la referencia de la fuente activa
+                delete activeSources[note];
+                console.log(`Deteniendo ${note}.`);
+            }
+        }
+
+        // Función para obtener el color de fondo de un elemento
+        function getBackgroundColor(element) {
+            return window.getComputedStyle(element).backgroundColor;
+        }
+
+        // Función para convertir un color RGB/RGBA a RGBA con opacidad
+        function rgbaToRgb(rgbString, alpha) {
+            const parts = rgbString.match(/\d+/g);
+            if (!parts) return `rgba(0,0,0,${alpha})`;
+            return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alpha})`;
+        }
+
+        // Cuando la ventana se ha cargado completamente
+        window.addEventListener('load', () => {
+            initAudioContext(); // Inicializa el contexto de audio
+
+            // Selecciona todos los botones de notas
+            document.querySelectorAll('.note-button').forEach(button => {
+                // Evento al tocar (para móviles)
+                button.addEventListener('touchstart', async (e) => {
+                    e.preventDefault(); // Previene el comportamiento por defecto (ej. scroll)
+                    if (navigator.vibrate) navigator.vibrate(50); // Vibración si el dispositivo lo soporta
+
+                    // Reanuda el contexto de audio si está suspendido (necesario por políticas de reproducción automática)
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        await audioCtx.resume();
+                    }
+
+                    const note = button.dataset.note; // Obtiene la nota del atributo data-note
+                    button.classList.add('active'); // Añade la clase 'active' para el estilo de presionado
+                    
+                    // Obtiene el color de fondo actual para el efecto de brillo
+                    const baseColor = getBackgroundColor(button);
+                    button.style.boxShadow = `0 0 18px ${rgbaToRgb(baseColor, 0.9)}`; // Aplica el brillo dinámico
+                    button.classList.add('glow'); // Añade la clase 'glow' para la animación
+                    
+                    playNote(note); // Reproduce la nota
+                });
+
+                // Evento al dejar de tocar (para móviles)
+                button.addEventListener('touchend', (e) => {
+                    e.preventDefault(); // Previene el comportamiento por defecto
+                    const note = button.dataset.note;
+                    button.classList.remove('active'); // Quita la clase 'active'
+                    button.classList.remove('glow'); // Quita la clase 'glow'
+                    button.style.boxShadow = `0 4px 10px rgba(0,0,0,0.2)`; // Restaura la sombra normal
+                    stopNote(note); // Detiene la nota
+                });
+
+                // Eventos de ratón para compatibilidad con escritorio
+                button.addEventListener('mousedown', async () => {
+                    if (navigator.vibrate) navigator.vibrate(50);
+                    if (audioCtx && audioCtx.state === 'suspended') {
+                        await audioCtx.resume();
+                    }
+                    const note = button.dataset.note;
+                    button.classList.add('active');
+                    
+                    const baseColor = getBackgroundColor(button);
+                    button.style.boxShadow = `0 0 18px ${rgbaToRgb(baseColor, 0.9)}`;
+                    button.classList.add('glow');
+                    
+                    playNote(note);
+                });
+
+                button.addEventListener('mouseup', () => {
+                    const note = button.dataset.note;
+                    button.classList.remove('active');
+                    button.classList.remove('glow');
+                    button.style.boxShadow = `0 4px 10px rgba(0,0,0,0.2)`;
+                    stopNote(note);
+                });
+
+                // También manejar mouseleave para detener la nota si el ratón se sale del botón mientras está presionado
+                button.addEventListener('mouseleave', () => {
+                    const note = button.dataset.note;
+                    // Solo detener si el botón estaba activo (presionado)
+                    if (button.classList.contains('active')) {
+                        button.classList.remove('active');
+                        button.classList.remove('glow');
+                        button.style.boxShadow = `0 4px 10px rgba(0,0,0,0.2)`;
+                        stopNote(note);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
